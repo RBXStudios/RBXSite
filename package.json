@@ -1,0 +1,25 @@
+{
+  "name": "rbx-exploit-site",
+  "version": "1.0.0",
+  "description": "RBX Exploit - Script Executor for Roblox",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve . -p 3000",
+    "dev": "npx live-server --port=3000 --open=index.html",
+    "build": "echo 'Static site - no build step required'",
+    "preview": "npx serve . -p 8080"
+  },
+  "keywords": [
+    "rbx",
+    "exploit",
+    "roblox",
+    "executor"
+  ],
+  "author": "RBX Exploit Studios <rbxexploitstudios@gmail.com>",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "serve": "^14.2.3"
+  }
+}
