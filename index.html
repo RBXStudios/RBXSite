@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RBX Exploit</title>
+  <link rel="icon" type="image/png" href="Logo.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- Animated background grid -->
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+  <div class="particles" id="particles"></div>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      <img src="Logo.png" alt="RBX Exploit Logo" class="logo-img"/>
+      <span class="logo-text">RBX<span class="accent">EXPLOIT</span></span>
+    </div>
+    <button class="settings-btn" onclick="toggleSettings()" title="Settings">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+        <path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>
+      </svg>
+      Settings
+    </button>
+  </header>
+
+  <!-- SETTINGS PANEL -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-header">
+      <span>⚙ Settings</span>
+      <button onclick="toggleSettings()">✕</button>
+    </div>
+    <div class="settings-item">
+      <label>Neon Color</label>
+      <div class="color-options">
+        <span class="color-dot cyan active" onclick="setColor('cyan')" style="background:#00ffe7;"></span>
+        <span class="color-dot" onclick="setColor('pink')" style="background:#ff00c8;"></span>
+        <span class="color-dot" onclick="setColor('green')" style="background:#00ff88;"></span>
+        <span class="color-dot" onclick="setColor('orange')" style="background:#ff8800;"></span>
+      </div>
+    </div>
+    <div class="settings-item">
+      <label>Particle Effects</label>
+      <label class="toggle">
+        <input type="checkbox" checked id="particleToggle" onchange="toggleParticles()"/>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="settings-item">
+      <label>Scanlines</label>
+      <label class="toggle">
+        <input type="checkbox" checked id="scanlineToggle" onchange="toggleScanlines()"/>
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-glow"></div>
+      <h1 class="title">
+        <span class="glitch" data-text="RBX EXPLOIT">RBX EXPLOIT</span>
+      </h1>
+      <p class="subtitle">
+        The <span class="neon-word">Ultimate</span> Script Executor for Roblox
+        <br/>
+        <span class="subtitle-small">Powered by next-gen injection technology</span>
+      </p>
+
+      <!-- BUTTONS -->
+      <div class="buttons-row">
+
+        <button class="btn btn-inactive" disabled>
+          <span class="btn-icon">🔑</span>
+          <span class="btn-label">Get Key Free</span>
+          <span class="btn-tag">Coming Soon</span>
+        </button>
+
+        <a href="https://lootdest.org/s?lFu0tnY5" target="_blank" class="btn btn-primary">
+          <span class="btn-glow"></span>
+          <span class="btn-icon">⬇</span>
+          <span class="btn-label">Download Launcher</span>
+          <span class="btn-tag">Available</span>
+        </a>
+
+        <button class="btn btn-inactive" disabled>
+          <span class="btn-icon">💎</span>
+          <span class="btn-label">Purchase Key</span>
+          <span class="btn-tag">Coming Soon</span>
+        </button>
+
+      </div>
+
+      <!-- NOTES -->
+      <div class="notes-box">
+        <div class="notes-header">
+          <span class="notes-icon">⚠</span>
+          <span>Notes</span>
+        </div>
+        <p class="notes-text">
+          This app is an exploit executor for Roblox, we are not responsible for your account's security. I recommend using an <strong>alternative account</strong> to avoid the risk of bans.
+        </p>
+      </div>
+    </section>
+
+    <!-- ABOUT / STATS -->
+    <section class="about-section">
+      <div class="about-card">
+        <div class="about-header">
+          <img src="Logo.png" alt="RBX" class="about-logo"/>
+          <div>
+            <h2 class="about-title">About <span class="accent">RBX EXPLOIT</span></h2>
+            <p class="about-desc">RBX EXPLOIT is an app for running scripts in Roblox. We don't guarantee the security of your accounts; this app is for you to use hacks for farming, etc...</p>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+
+          <div class="stat-card">
+            <div class="stat-label">sUNC</div>
+            <div class="stat-value neon-green">100%</div>
+            <div class="stat-bar"><div class="stat-fill" style="width:100%; background: var(--neon)"></div></div>
+            <div class="stat-details">
+              <div class="stat-row passed"><span>✔ Passed:</span> <span>100 items</span></div>
+              <div class="stat-row failed"><span>✘ Failed:</span> <span>None</span></div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">UNC</div>
+            <div class="stat-value neon-yellow">99%</div>
+            <div class="stat-bar"><div class="stat-fill" style="width:99%; background: #ffe600"></div></div>
+            <div class="stat-details">
+              <div class="stat-row passed"><span>✔ Passed:</span> <span>99 items</span></div>
+              <div class="stat-row failed"><span>✘ Failed:</span> <span>Websocket</span></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="download-center">
+          <a href="https://lootdest.org/s?lFu0tnY5" target="_blank" class="btn btn-primary btn-large">
+            <span class="btn-glow"></span>
+            <span class="btn-icon">⬇</span>
+            <span class="btn-label">Download RBX Exploit</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER / CONTACT -->
+  <footer class="footer">
+    <div class="footer-divider"></div>
+    <div class="footer-content">
+      <div class="footer-brand">
+        <img src="Logo.png" alt="RBX" class="footer-logo"/>
+        <span class="footer-name">RBX<span class="accent">EXPLOIT</span></span>
+      </div>
+      <div class="footer-links">
+        <a href="https://discord.gg/m6PGmWDzZ9" target="_blank" class="contact-btn discord">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.034.056a19.9 19.9 0 0 0 5.993 3.03.077.077 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
+          </svg>
+          Discord
+        </a>
+        <a href="mailto:rbxexploitstudios@gmail.com" class="contact-btn email">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+          </svg>
+          rbxexploitstudios@gmail.com
+        </a>
+      </div>
+    </div>
+    <p class="footer-copy">© 2025 RBX Exploit Studios. All rights reserved.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
