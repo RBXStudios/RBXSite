@@ -170,13 +170,10 @@
     }, 1000);
 
     // ── Link do encurtador ──
-    const SHORTENER_URL = 'https://lootdest.org/s?lFu0tnY5'; // ← troque pelo seu
+    const SHORTENER_URL = 'https://loot-link.com/s?ozrjO38g'; // ← troque pelo seu
 
     function goLink() {
-      // Abre o encurtador e avança o step
       window.open(SHORTENER_URL, '_blank');
-      // Avança para checkpoint 2 após pequeno delay
-      setTimeout(() => advanceStep(), 1500);
     }
 
     async function advanceStep() {
