@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Get Key — RBX Exploit</title>
+  <link rel="icon" type="image/png" href="Logo.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --neon: #00ffe7;
+      --neon-dim: rgba(0,255,231,0.15);
+      --neon-glow: 0 0 10px #00ffe7, 0 0 30px #00ffe7, 0 0 60px #00ffe780;
+      --bg: #020b12;
+      --surface: rgba(0,255,231,0.04);
+      --surface-border: rgba(0,255,231,0.15);
+      --text: #e0f7f5;
+      --text-dim: rgba(224,247,245,0.5);
+      --font-d: 'Orbitron', sans-serif;
+      --font-b: 'Rajdhani', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text); font-family: var(--font-b);
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; overflow-x: hidden;
+    }
+    .bg-grid {
+      position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(0,255,231,0.04) 1px,transparent 1px),
+                        linear-gradient(90deg,rgba(0,255,231,0.04) 1px,transparent 1px);
+      background-size: 50px 50px; pointer-events: none; z-index: 0;
+    }
+    .scanlines {
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
+      pointer-events: none; z-index: 1;
+    }
+    .wrap {
+      position: relative; z-index: 10;
+      width: 100%; max-width: 520px; padding: 24px;
+      display: flex; flex-direction: column; align-items: center; gap: 28px;
+    }
+    .logo-row { display: flex; align-items: center; gap: 12px; }
+    .logo-row img { width: 44px; height: 44px; border-radius: 8px; filter: drop-shadow(0 0 8px var(--neon)); }
+    .logo-row span { font-family: var(--font-d); font-size: 1.1rem; font-weight: 900; color: #fff; }
+    .logo-row .acc { color: var(--neon); }
+
+    .card {
+      width: 100%; background: var(--surface);
+      border: 1px solid var(--surface-border); border-radius: 18px; padding: 40px 36px;
+      position: relative; overflow: hidden;
+      box-shadow: 0 0 40px rgba(0,255,231,0.06), 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon), transparent);
+    }
+    .card-title {
+      font-family: var(--font-d); font-size: 1.1rem; font-weight: 900;
+      letter-spacing: 0.1em; color: #fff; text-align: center; margin-bottom: 10px;
+    }
+    .card-title .acc { color: var(--neon); }
+    .card-sub {
+      font-size: 0.95rem; color: var(--text-dim); text-align: center;
+      line-height: 1.6; margin-bottom: 36px;
+    }
+    .card-sub strong { color: var(--neon); }
+
+    /* Steps list */
+    .steps { display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px; }
+    .step-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      background: rgba(0,0,0,0.2); border: 1px solid rgba(0,255,231,0.08);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      border: 1.5px solid var(--neon); color: var(--neon);
+      font-family: var(--font-d); font-size: 0.65rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 8px rgba(0,255,231,0.3);
+    }
+    .step-text { font-size: 0.95rem; color: var(--text-dim); line-height: 1.5; padding-top: 3px; }
+    .step-text strong { color: var(--text); }
+
+    .btn-start {
+      width: 100%; padding: 18px 24px; border-radius: 12px;
+      border: 1px solid var(--neon);
+      background: linear-gradient(135deg, rgba(0,255,231,0.18), rgba(0,255,231,0.06));
+      color: var(--neon); font-family: var(--font-d); font-size: 0.85rem;
+      font-weight: 700; letter-spacing: 0.1em; cursor: pointer; transition: all 0.3s;
+      box-shadow: 0 0 20px rgba(0,255,231,0.15); position: relative; overflow: hidden;
+    }
+    .btn-start:hover {
+      background: linear-gradient(135deg, rgba(0,255,231,0.28), rgba(0,255,231,0.12));
+      box-shadow: var(--neon-glow); transform: translateY(-2px);
+    }
+    .btn-start:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .warn-box {
+      margin-top: 20px; padding: 14px 16px;
+      background: rgba(255,200,0,0.05); border: 1px solid rgba(255,200,0,0.2);
+      border-radius: 8px; font-size: 0.85rem; color: rgba(255,230,150,0.7); line-height: 1.5;
+    }
+    .warn-box strong { color: #ffe600; }
+
+    @media(max-width:520px){ .card{padding:28px 20px;} }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+  <div class="wrap">
+    <div class="logo-row">
+      <img src="Logo.png" alt="RBX"/>
+      <span>RBX<span class="acc">EXPLOIT</span></span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">GET <span class="acc">KEY FREE</span></div>
+      <div class="card-sub">
+        Complete <strong>3 checkpoints</strong> e receba sua key gratuita de <strong>1 dia</strong>.<br/>
+        Não feche a aba durante o processo!
+      </div>
+
+      <div class="steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text"><strong>Checkpoint 1</strong> — Acesse o link e complete o encurtador.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text"><strong>Checkpoint 2</strong> — Repita o processo no segundo encurtador.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text"><strong>Checkpoint 3</strong> — Último encurtador. Sua key será gerada automaticamente.</div>
+        </div>
+      </div>
+
+      <button class="btn-start" id="btnStart" onclick="startFlow()">▶ COMEÇAR AGORA</button>
+
+      <div class="warn-box">
+        <strong>⚠ Atenção:</strong> Não feche ou atualize a página durante os checkpoints ou precisará recomeçar do zero.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api/checkpoint';
+
+    async function startFlow() {
+      const btn = document.getElementById('btnStart');
+      btn.disabled = true;
+      btn.textContent = 'INICIANDO...';
+      try {
+        const res = await fetch(API + '?action=start', { method: 'POST' });
+        const data = await res.json();
+        sessionStorage.setItem('rbx_token', data.token);
+        sessionStorage.setItem('rbx_step', '1');
+      } catch {
+        // fallback offline
+        sessionStorage.setItem('rbx_token', 'offline-' + Date.now());
+        sessionStorage.setItem('rbx_step', '1');
+      }
+      window.location.href = 'checkpoints/checkpoint1.html';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkpoint 2 — RBX Exploit</title>
+  <link rel="icon" type="image/png" href="../Logo.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --neon:#00ffe7; --neon-dim:rgba(0,255,231,0.15);
+      --neon-glow:0 0 10px #00ffe7,0 0 30px #00ffe7,0 0 60px #00ffe780;
+      --bg:#020b12; --surface:rgba(0,255,231,0.04);
+      --surface-border:rgba(0,255,231,0.15);
+      --text:#e0f7f5; --text-dim:rgba(224,247,245,0.5);
+      --font-d:'Orbitron',sans-serif; --font-b:'Rajdhani',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:var(--font-b);
+      min-height:100vh;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;overflow-x:hidden;}
+    .bg-grid{position:fixed;inset:0;
+      background-image:linear-gradient(rgba(0,255,231,0.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,255,231,0.04) 1px,transparent 1px);
+      background-size:50px 50px;pointer-events:none;z-index:0;}
+    .scanlines{position:fixed;inset:0;
+      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
+      pointer-events:none;z-index:1;}
+    .wrap{position:relative;z-index:10;width:100%;max-width:500px;padding:24px;
+      display:flex;flex-direction:column;align-items:center;gap:24px;}
+    .logo-row{display:flex;align-items:center;gap:10px;}
+    .logo-row img{width:38px;height:38px;border-radius:8px;filter:drop-shadow(0 0 6px var(--neon));}
+    .logo-row span{font-family:var(--font-d);font-size:1rem;font-weight:900;color:#fff;}
+    .logo-row .acc{color:var(--neon);}
+    .prog-wrap{width:100%;}
+    .prog-label{display:flex;justify-content:space-between;
+      font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;
+      color:var(--text-dim);margin-bottom:8px;}
+    .prog-track{width:100%;height:4px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;}
+    .prog-fill{height:100%;border-radius:4px;background:var(--neon);
+      box-shadow:0 0 10px var(--neon);transition:width 0.5s ease;}
+    .dots{display:flex;justify-content:center;gap:12px;margin-top:12px;}
+    .dot{width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.1);
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--font-d);font-size:0.6rem;font-weight:700;color:var(--text-dim);}
+    .dot.active{border-color:var(--neon);color:var(--neon);box-shadow:0 0 8px var(--neon);}
+    .dot.done{border-color:var(--neon);background:var(--neon-dim);color:var(--neon);}
+    .card{width:100%;background:var(--surface);border:1px solid var(--surface-border);
+      border-radius:16px;padding:36px 32px;position:relative;overflow:hidden;
+      box-shadow:0 0 40px rgba(0,255,231,0.06),0 20px 60px rgba(0,0,0,0.4);}
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,var(--neon),transparent);}
+    .card-title{font-family:var(--font-d);font-size:0.95rem;font-weight:900;
+      letter-spacing:0.1em;color:#fff;text-align:center;margin-bottom:6px;}
+    .card-sub{font-size:0.9rem;color:var(--text-dim);text-align:center;
+      line-height:1.6;margin-bottom:28px;}
+    .card-sub .acc{color:var(--neon);font-weight:700;}
+    .timer-wrap{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:22px;}
+    .timer-ring{position:relative;width:56px;height:56px;}
+    .timer-ring svg{transform:rotate(-90deg);}
+    .timer-ring circle{fill:none;stroke-width:3;}
+    .ring-bg{stroke:rgba(255,255,255,0.07);}
+    .ring-fg{stroke:var(--neon);stroke-linecap:round;
+      stroke-dasharray:151;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear;}
+    .timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-family:var(--font-d);font-size:1rem;font-weight:700;color:var(--neon);}
+    .timer-label{font-size:0.88rem;color:var(--text-dim);}
+    .btn-cp{width:100%;padding:16px 24px;border-radius:10px;
+      border:1px solid var(--neon);
+      background:linear-gradient(135deg,rgba(0,255,231,0.15),rgba(0,255,231,0.05));
+      color:var(--neon);font-family:var(--font-d);font-size:0.78rem;
+      font-weight:700;letter-spacing:0.08em;cursor:pointer;transition:all 0.3s;
+      box-shadow:0 0 20px rgba(0,255,231,0.12);}
+    .btn-cp:hover:not(:disabled){
+      background:linear-gradient(135deg,rgba(0,255,231,0.25),rgba(0,255,231,0.1));
+      box-shadow:var(--neon-glow);transform:translateY(-2px);}
+    .btn-cp:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}
+    .note{margin-top:14px;font-size:0.82rem;color:var(--text-dim);
+      text-align:center;line-height:1.5;opacity:0.7;}
+    @media(max-width:500px){.card{padding:28px 20px;}}
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+  <div class="wrap">
+    <div class="logo-row">
+      <img src="../Logo.png" alt="RBX"/>
+      <span>RBX<span class="acc">EXPLOIT</span></span>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-label"><span>CHECKPOINT 2/3</span><span>66%</span></div>
+      <div class="prog-track"><div class="prog-fill" style="width:66%"></div></div>
+      <div class="dots">
+        <div class="dot done">✓</div>
+        <div class="dot active">2</div>
+        <div class="dot">3</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">CHECKPOINT 2 / 3</div>
+      <div class="card-sub">
+        Ótimo progresso! Acesse o segundo encurtador.<br/>
+        Após completar, <span class="acc">você será redirecionado automaticamente.</span>
+      </div>
+      <div class="timer-wrap">
+        <div class="timer-ring">
+          <svg width="56" height="56" viewBox="0 0 56 56">
+            <circle class="ring-bg" cx="28" cy="28" r="24"/>
+            <circle class="ring-fg" id="ringFg" cx="28" cy="28" r="24"/>
+          </svg>
+          <div class="timer-num" id="timerNum">3</div>
+        </div>
+        <div class="timer-label" id="timerLabel">Aguarde para continuar...</div>
+      </div>
+      <button class="btn-cp" id="btnCP" disabled onclick="goLink()">
+        🔗 IR AO ENCURTADOR — CHECKPOINT 2
+      </button>
+      <div class="note">Após completar o encurtador no site externo, volte aqui. O próximo checkpoint será liberado automaticamente.</div>
+    </div>
+  </div>
+  <script>
+    const token = sessionStorage.getItem('rbx_token');
+    const step  = sessionStorage.getItem('rbx_step');
+    if (!token || step !== '2') window.location.href = '../get-key.html';
+
+    const TOTAL = 3;
+    let t = TOTAL;
+    const ring  = document.getElementById('ringFg');
+    const num   = document.getElementById('timerNum');
+    const label = document.getElementById('timerLabel');
+    const btn   = document.getElementById('btnCP');
+    const C = 2 * Math.PI * 24;
+    ring.style.strokeDasharray  = C;
+    ring.style.strokeDashoffset = 0;
+
+    const interval = setInterval(() => {
+      t--;
+      num.textContent = t;
+      ring.style.strokeDashoffset = C * (1 - t / TOTAL);
+      if (t <= 0) {
+        clearInterval(interval);
+        num.textContent = '✓';
+        label.textContent = 'Pronto! Clique no botão abaixo.';
+        label.style.color = 'var(--neon)';
+        btn.disabled = false;
+      }
+    }, 1000);
+
+    const SHORTENER_URL = 'https://lootdest.org/s?lFu0tnY5'; // ← troque pelo seu
+
+    function goLink() {
+      window.open(SHORTENER_URL, '_blank');
+      setTimeout(() => advanceStep(), 1500);
+    }
+
+    async function advanceStep() {
+      try {
+        const res = await fetch('/api/checkpoint?action=advance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, currentStep: 2 })
+        });
+        const data = await res.json();
+        if (data.valid) {
+          sessionStorage.setItem('rbx_token', data.token);
+          sessionStorage.setItem('rbx_step', '3');
+        }
+      } catch {
+        sessionStorage.setItem('rbx_token', 'offline-' + Date.now());
+        sessionStorage.setItem('rbx_step', '3');
+      }
+      window.location.href = 'checkpoint3.html';
+    }
+  </script>
+</body>
+</html>
