@@ -28,10 +28,10 @@
     .logo-row .acc{color:var(--neon);}
     .card{width:100%;background:var(--surface);border:1px solid var(--surface-border);border-radius:16px;padding:36px 32px;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(0,255,231,0.1),0 20px 60px rgba(0,0,0,0.4);}
     .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);}
+    .emoji{font-size:3rem;display:block;text-align:center;margin-bottom:14px;}
     .card-title{font-family:var(--font-d);font-size:0.95rem;font-weight:900;letter-spacing:0.1em;color:#fff;text-align:center;margin-bottom:6px;}
     .card-sub{font-size:0.9rem;color:var(--text-dim);text-align:center;line-height:1.6;margin-bottom:28px;}
     .card-sub .acc{color:var(--neon);font-weight:700;}
-    .emoji{font-size:3rem;display:block;text-align:center;margin-bottom:14px;}
     .key-box{background:rgba(0,0,0,0.45);border:1px solid var(--neon);border-radius:12px;padding:22px 20px;text-align:center;margin-bottom:16px;box-shadow:0 0 24px rgba(0,255,231,0.12),inset 0 0 20px rgba(0,255,231,0.04);}
     .key-label{font-size:0.82rem;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em;}
     .key-code{font-family:var(--font-d);font-size:1.1rem;font-weight:700;color:var(--neon);letter-spacing:0.07em;text-shadow:var(--neon-glow);word-break:break-all;}
@@ -82,15 +82,29 @@
   </div>
 
   <script>
-    const SHORTENER_PERM_TOKEN = 'Encurtador';
+    const PERM_TOKEN = 'Encurtador';
 
+    // Limpa URL sem recarregar
+    function clearQueryStringPreservePath() {
+      if (window.history && window.history.replaceState) {
+        const clean = window.location.origin + window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, clean);
+      }
+    }
+
+    // Tenta buscar key do encurtador com ?perm na URL
     async function tryFetchKeyFromAdvanceUsingQuery() {
       const params = new URLSearchParams(window.location.search);
-      const confirmCode = params.get('confirm');
+      const incomingPerm = params.get('perm');
+      const pendingPerm = sessionStorage.getItem('pendingPerm');
 
-      if (!confirmCode) return null;
+      const permToUse = incomingPerm || pendingPerm;
+      if (!permToUse) return null;
 
-      const body = { token: sessionStorage.getItem('rbx_token'), currentStep: 3, confirmCode };
+      sessionStorage.removeItem('pendingPerm');
+      clearQueryStringPreservePath();
+
+      const body = { permToken: permToUse, currentStep: 3 };
       try {
         const res = await fetch('/api/checkpoint?action=advance', {
           method: 'POST',
@@ -106,19 +120,28 @@
     }
 
     async function init() {
+      // Tenta pegar key do sessionStorage primeiro
       let key = sessionStorage.getItem('rbx_key');
+      
+      // Se não encontrou, tenta buscar do encurtador
       if (!key) {
         key = await tryFetchKeyFromAdvanceUsingQuery();
       }
+      
+      // Se ainda não tem key, redireciona
       if (!key) {
         window.location.href = '../get-key.html';
         return;
       }
 
+      // Exibe a key
       document.getElementById('keyDisplay').textContent = key;
+      
+      // Limpa tudo
       sessionStorage.removeItem('rbx_key');
       sessionStorage.removeItem('rbx_token');
       sessionStorage.removeItem('rbx_step');
+      sessionStorage.removeItem('pendingPerm');
     }
 
     function copyKey() {
@@ -129,9 +152,12 @@
         setTimeout(() => {
           btn.textContent = '📋 COPIAR KEY';
         }, 2500);
+      }).catch(() => {
+        alert('Erro ao copiar. Tente novamente.');
       });
     }
 
+    // Inicia quando carregar
     init();
   </script>
 </body>

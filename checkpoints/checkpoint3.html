@@ -122,12 +122,14 @@
   </div>
   <script>
   const SHORTENER_URL = 'https://lootdest.org/s?qC9dMdUM';
+  const PERM_TOKEN = 'Encurtador';
+
   let token = sessionStorage.getItem('rbx_token');
   let step  = sessionStorage.getItem('rbx_step');
 
   (function ensureSessionOrRedirect() {
     const qs = new URLSearchParams(window.location.search);
-    if ((!token || step !== '3') && !qs.get('confirm')) {
+    if ((!token || step !== '3') && !qs.get('perm')) {
       window.location.href = '../get-key.html';
     }
   })();
@@ -156,6 +158,7 @@
   }, 1000);
 
   function goLink() {
+    sessionStorage.setItem('pendingPerm', PERM_TOKEN);
     window.location.href = SHORTENER_URL;
   }
 
@@ -168,17 +171,21 @@
 
   (async function processIncomingParams() {
     const qs = new URLSearchParams(window.location.search);
-    const confirmCode = qs.get('confirm');
-    
-    if (!confirmCode) return;
-    
+    const incomingPerm = qs.get('perm');
+    const pendingPerm = sessionStorage.getItem('pendingPerm');
+
+    if (!incomingPerm && !pendingPerm) return;
+
     clearQueryStringPreservePath();
+
+    const permToUse = incomingPerm || pendingPerm;
+    sessionStorage.removeItem('pendingPerm');
 
     try {
       const res = await fetch('/api/checkpoint?action=advance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: sessionStorage.getItem('rbx_token'), currentStep: 3, confirmCode })
+        body: JSON.stringify({ permToken: permToUse, currentStep: 3 })
       });
       const data = await res.json();
       if (data && data.valid) {

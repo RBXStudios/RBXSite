@@ -122,6 +122,8 @@
   </div>
   <script>
   const SHORTENER_URL = 'https://loot-link.com/s?KGnJaUWC';
+  const PERM_TOKEN = 'Encurtador';
+
   let token = sessionStorage.getItem('rbx_token');
   let step  = sessionStorage.getItem('rbx_step');
   if (!token || step !== '1') {
@@ -138,6 +140,7 @@
   ring.style.strokeDasharray  = C;
   ring.style.strokeDashoffset = C;
 
+  // Timer countdown
   const timerInterval = setInterval(() => {
     t--;
     num.textContent = t;
@@ -151,10 +154,13 @@
     }
   }, 1000);
 
+  // Abre encurtador e armazena token em sessionStorage
   function goLink() {
+    sessionStorage.setItem('pendingPerm', PERM_TOKEN);
     window.location.href = SHORTENER_URL;
   }
 
+  // Limpa URL quando volta
   function clearQueryStringPreservePath() {
     if (window.history && window.history.replaceState) {
       const clean = window.location.origin + window.location.pathname + window.location.hash;
@@ -162,19 +168,26 @@
     }
   }
 
+  // Processa quando volta do encurtador com ?perm=Encurtador
   (async function processIncomingParams() {
     const qs = new URLSearchParams(window.location.search);
-    const confirmCode = qs.get('confirm');
-    
-    if (!confirmCode) return;
-    
+    const incomingPerm = qs.get('perm');
+    const pendingPerm = sessionStorage.getItem('pendingPerm');
+
+    // Se tem perm na URL OU no sessionStorage
+    if (!incomingPerm && !pendingPerm) return;
+
+    // Limpa URL imediatamente
     clearQueryStringPreservePath();
+
+    const permToUse = incomingPerm || pendingPerm;
+    sessionStorage.removeItem('pendingPerm');
 
     try {
       const res = await fetch('/api/checkpoint?action=advance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: sessionStorage.getItem('rbx_token'), currentStep: 1, confirmCode })
+        body: JSON.stringify({ permToken: permToUse, currentStep: 1 })
       });
       const data = await res.json();
       if (data && data.valid) {
