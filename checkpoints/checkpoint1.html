@@ -161,41 +161,6 @@
   ring.style.strokeDasharray  = C;
   ring.style.strokeDashoffset = 0;
 
-  // cria botão manual (Já completei) dinamicamente
-  let manualBtn = null;
-  function ensureManualButton() {
-    if (manualBtn) return manualBtn;
-    manualBtn = document.createElement('button');
-    manualBtn.id = 'btnManual';
-    manualBtn.type = 'button';
-    manualBtn.textContent = '✓ Já completei';
-    manualBtn.style.marginTop = '12px';
-    manualBtn.style.background = 'transparent';
-    manualBtn.style.border = '0';
-    manualBtn.style.color = 'var(--neon)';
-    manualBtn.style.cursor = 'pointer';
-    manualBtn.style.textDecoration = 'underline';
-    manualBtn.style.fontWeight = '700';
-    manualBtn.style.display = 'none';
-    btn.parentNode.insertBefore(manualBtn, btn.nextSibling);
-    manualBtn.addEventListener('click', manualAdvance);
-    return manualBtn;
-  }
-
-  const interval = setInterval(() => {
-    t--;
-    num.textContent = t;
-    ring.style.strokeDashoffset = C * (1 - t / TOTAL);
-    if (t <= 0) {
-      clearInterval(interval);
-      num.textContent = '✓';
-      label.textContent = 'Pronto! Clique no botão abaixo.';
-      label.style.color = 'var(--neon)';
-      btn.disabled = false;
-      ensureManualButton().style.display = 'block';
-    }
-  }, 1000);
-
   // abre o encurtador NO MESMO TAB (normal)
   function goLink() {
     window.location.href = SHORTENER_URL;
@@ -230,34 +195,54 @@
     }
   }
 
-  // Fallback: caso encurtador redirecione de volta com ?perm=... ou ?token=...
-  (async function processIncomingParams() {
-    const qs = new URLSearchParams(window.location.search);
-    const incomingPerm = qs.get('perm');
-    const incomingToken = qs.get('token');
-    if (!incomingPerm && !incomingToken) return;
-    const body = incomingPerm ? { permToken: incomingPerm, currentStep: 1 } : { token: incomingToken, currentStep: 1 };
-    try {
-      const res = await fetch('/api/checkpoint?action=advance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if (data && data.valid) {
-        sessionStorage.setItem('rbx_token', data.token);
-        sessionStorage.setItem('rbx_step', String(data.next));
-        window.location.href = 'checkpoint2.html';
-      } else if (data && data.done) {
-        sessionStorage.setItem('rbx_key', data.key);
-        window.location.href = 'getkeyreward.html';
-      } else {
-        window.location.href = '../get-key.html';
-      }
-    } catch (e) {
-      console.error('processIncomingParams error', e);
+  // ----- limpa a query string sem recarregar -----
+function clearQueryStringPreservePath() {
+  if (window.history && window.history.replaceState) {
+    const clean = window.location.origin + window.location.pathname + window.location.hash;
+    window.history.replaceState({}, document.title, clean);
+  }
+}
+
+// exemplo: processamento ao carregar a página
+(async function processIncomingParamsAndHide() {
+  const qs = new URLSearchParams(window.location.search);
+  const incomingPerm = qs.get('perm');
+  const incomingToken = qs.get('token');
+
+  // se não veio nada, só limpa (opcional) e retorna
+  if (!incomingPerm && !incomingToken) return;
+
+  // limpa a query imediatamente pra não continuar visível
+  clearQueryStringPreservePath();
+
+  // prepara body para chamar advance (currentStep conforme página)
+  const currentStep = 1; // exemplo: 1 em checkpoint1, 2 em checkpoint2, etc.
+  const body = incomingPerm ? { permToken: incomingPerm, currentStep } : { token: incomingToken, currentStep };
+
+  try {
+    const res = await fetch('/api/checkpoint?action=advance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data && data.valid) {
+      sessionStorage.setItem('rbx_token', data.token);
+      sessionStorage.setItem('rbx_step', String(data.next));
+      // redireciona se for o fluxo normal
+      window.location.href = `checkpoint${data.next}.html`;
+    } else if (data && data.done) {
+      sessionStorage.setItem('rbx_key', data.key);
+      window.location.href = 'getkeyreward.html';
+    } else {
+      window.location.href = '/get-key.html';
     }
-  })();
+  } catch (e) {
+    console.error('Advance error', e);
+    // deixe o usuário no lugar ou redirecione ao início
+    // window.location.href = '/get-key.html';
+  }
+})();
 </script>
 </body>
 </html>
