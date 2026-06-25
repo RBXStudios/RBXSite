@@ -89,8 +89,6 @@
     .note{margin-top:14px;font-size:0.82rem;color:var(--text-dim);
       text-align:center;line-height:1.5;opacity:0.7;}
 
-    .manual-btn{margin-top:12px;display:block;background:transparent;border:0;color:var(--neon);cursor:pointer;text-decoration:underline;font-weight:700;}
-
     @media(max-width:500px){.card{padding:28px 20px;}}
   </style>
 </head>
@@ -135,160 +133,131 @@
       <button class="btn-cp" id="btnCP" disabled onclick="goLink()">
         🔗 IR AO ENCURTADOR — CHECKPOINT 1
       </button>
-      <button class="manual-btn" id="btnManual" onclick="manualAdvance()" style="display:none;">✓ Já completei</button>
 
       <div class="note">Após completar o encurtador no site externo, volte aqui. O próximo checkpoint será liberado automaticamente.</div>
     </div>
 
   </div>
   <script>
-    // Config
-    const SHORTENER_URL = 'https://loot-link.com/s?KGnJaUWC'; // ← seu encurtador (apenas o link normal)
-    const PERM_TOKEN = 'Encurtador'; // permanece como fallback se encurtador redirecionar
+  // CONFIG
+  const SHORTENER_URL = 'https://loot-link.com/s?KGnJaUWC'; // ← seu encurtador (abre normal)
+  const PERM_TOKEN = 'Encurtador';
 
-    // session
-    let token = sessionStorage.getItem('rbx_token');
-    let step  = sessionStorage.getItem('rbx_step');
-    if (!token || step !== '1') window.location.href = '../get-key.html';
+  // Sessão / validação de fluxo
+  let token = sessionStorage.getItem('rbx_token');
+  let step  = sessionStorage.getItem('rbx_step');
+  if (!token || step !== '1') {
+    window.location.href = '../get-key.html';
+  }
 
-    // Timer UI
-    const TOTAL = 3;
-    let t = TOTAL;
-    const ring  = document.getElementById('ringFg');
-    const num   = document.getElementById('timerNum');
-    const label = document.getElementById('timerLabel');
-    const btn   = document.getElementById('btnCP');
-    const manualBtn = document.getElementById('btnManual');
-    const C = 2 * Math.PI * 24;
-    ring.style.strokeDasharray  = C;
-    ring.style.strokeDashoffset = 0;
-    const interval = setInterval(() => {
-      t--;
-      num.textContent = t;
-      ring.style.strokeDashoffset = C * (1 - t / TOTAL);
-      if (t <= 0) {
-        clearInterval(interval);
-        num.textContent = '✓';
-        label.textContent = 'Pronto! Clique no botão abaixo.';
-        label.style.color = 'var(--neon)';
-        btn.disabled = false;
-        manualBtn.style.display = 'block';
-      }
-    }, 1000);
+  // UI - timer
+  const TOTAL = 3;
+  let t = TOTAL;
+  const ring  = document.getElementById('ringFg');
+  const num   = document.getElementById('timerNum');
+  const label = document.getElementById('timerLabel');
+  const btn   = document.getElementById('btnCP');
+  const C = 2 * Math.PI * 24;
+  ring.style.strokeDasharray  = C;
+  ring.style.strokeDashoffset = 0;
 
-    // Abre encurtador em nova aba e espera o fechamento para avançar automaticamente
-    function goLink() {
-      openShortenerAndWait(SHORTENER_URL, 1, 'checkpoint2.html');
+  // cria botão manual (Já completei) dinamicamente
+  let manualBtn = null;
+  function ensureManualButton() {
+    if (manualBtn) return manualBtn;
+    manualBtn = document.createElement('button');
+    manualBtn.id = 'btnManual';
+    manualBtn.type = 'button';
+    manualBtn.textContent = '✓ Já completei';
+    manualBtn.style.marginTop = '12px';
+    manualBtn.style.background = 'transparent';
+    manualBtn.style.border = '0';
+    manualBtn.style.color = 'var(--neon)';
+    manualBtn.style.cursor = 'pointer';
+    manualBtn.style.textDecoration = 'underline';
+    manualBtn.style.fontWeight = '700';
+    manualBtn.style.display = 'none';
+    btn.parentNode.insertBefore(manualBtn, btn.nextSibling);
+    manualBtn.addEventListener('click', manualAdvance);
+    return manualBtn;
+  }
+
+  const interval = setInterval(() => {
+    t--;
+    num.textContent = t;
+    ring.style.strokeDashoffset = C * (1 - t / TOTAL);
+    if (t <= 0) {
+      clearInterval(interval);
+      num.textContent = '✓';
+      label.textContent = 'Pronto! Clique no botão abaixo.';
+      label.style.color = 'var(--neon)';
+      btn.disabled = false;
+      ensureManualButton().style.display = 'block';
     }
+  }, 1000);
 
-    // Polling popup approach
-    function openShortenerAndWait(shortenerUrl, currentStep, nextPage) {
-      const popup = window.open(shortenerUrl, '_blank', 'width=1000,height=700');
-      if (!popup) {
-        alert('Popup bloqueado. Permita popups para este site ou use o botão "Já completei".');
+  // abre o encurtador NO MESMO TAB (normal)
+  function goLink() {
+    window.location.href = SHORTENER_URL;
+  }
+
+  // confirmação manual: avança currentStep=1
+  async function manualAdvance() {
+    try {
+      const res = await fetch('/api/checkpoint?action=advance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: sessionStorage.getItem('rbx_token'), currentStep: 1 })
+      });
+      const data = await res.json();
+      if (data && data.valid) {
+        sessionStorage.setItem('rbx_token', data.token);
+        sessionStorage.setItem('rbx_step', String(data.next));
+        window.location.href = 'checkpoint2.html';
         return;
       }
-
-      // Poll até a janela fechar
-      const pollInterval = 1000;
-      let waited = 0;
-      const maxWaitMs = 1000 * 60 * 10; // 10 minutos
-      const loop = setInterval(async () => {
-        if (popup.closed) {
-          clearInterval(loop);
-          // tenta avançar no backend
-          try {
-            const res = await fetch('/api/checkpoint?action=advance', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ token: sessionStorage.getItem('rbx_token'), currentStep })
-            });
-            const data = await res.json();
-            if (data && data.valid) {
-              sessionStorage.setItem('rbx_token', data.token);
-              sessionStorage.setItem('rbx_step', String(data.next));
-              window.location.href = nextPage;
-              return;
-            }
-            if (data && data.done) {
-              sessionStorage.setItem('rbx_key', data.key);
-              sessionStorage.removeItem('rbx_token');
-              sessionStorage.removeItem('rbx_step');
-              window.location.href = 'getkeyreward.html';
-              return;
-            }
-            alert('Não foi possível validar automaticamente. Clique em "Já completei" ou tente novamente.');
-          } catch (e) {
-            console.error('Advance error', e);
-            alert('Erro de rede ao validar. Clique em "Já completei" para tentar manualmente.');
-          }
-        }
-        waited += pollInterval;
-        if (waited > maxWaitMs) {
-          clearInterval(loop);
-          try { popup.close(); } catch {}
-          alert('Tempo esgotado aguardando a aba do encurtador. Tente novamente.');
-        }
-      }, pollInterval);
-    }
-
-    // Botão manual caso popup bloqueado
-    async function manualAdvance() {
-      try {
-        const res = await fetch('/api/checkpoint?action=advance', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: sessionStorage.getItem('rbx_token'), currentStep: 1 })
-        });
-        const data = await res.json();
-        if (data && data.valid) {
-          sessionStorage.setItem('rbx_token', data.token);
-          sessionStorage.setItem('rbx_step', String(data.next));
-          window.location.href = 'checkpoint2.html';
-          return;
-        }
-        if (data && data.done) {
-          sessionStorage.setItem('rbx_key', data.key);
-          sessionStorage.removeItem('rbx_token');
-          sessionStorage.removeItem('rbx_step');
-          window.location.href = 'getkeyreward.html';
-          return;
-        }
-        alert('Não foi possível validar. Tente novamente.');
-      } catch (e) {
-        console.error(e);
-        alert('Erro ao validar. Verifique sua conexão e tente novamente.');
+      if (data && data.done) {
+        sessionStorage.setItem('rbx_key', data.key);
+        sessionStorage.removeItem('rbx_token');
+        sessionStorage.removeItem('rbx_step');
+        window.location.href = 'getkeyreward.html';
+        return;
       }
+      alert('Não foi possível validar. Tente novamente.');
+    } catch (e) {
+      console.error('manualAdvance error', e);
+      alert('Erro ao validar. Verifique a conexão e tente novamente.');
     }
+  }
 
-    // Fallback: também processa se encurtador chegar a redirecionar com ?perm=... ou ?token=...
-    (async function processIncomingParams() {
-      const qs = new URLSearchParams(window.location.search);
-      const incomingPerm = qs.get('perm');
-      const incomingToken = qs.get('token');
-      if (!incomingPerm && !incomingToken) return;
-      const body = incomingPerm ? { permToken: incomingPerm, currentStep: 1 } : { token: incomingToken, currentStep: 1 };
-      try {
-        const res = await fetch('/api/checkpoint?action=advance', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        if (data && data.valid) {
-          sessionStorage.setItem('rbx_token', data.token);
-          sessionStorage.setItem('rbx_step', String(data.next));
-          window.location.href = 'checkpoint2.html';
-        } else if (data && data.done) {
-          sessionStorage.setItem('rbx_key', data.key);
-          window.location.href = 'getkeyreward.html';
-        } else {
-          window.location.href = '../get-key.html';
-        }
-      } catch (e) {
-        console.error(e);
+  // Fallback: caso encurtador redirecione de volta com ?perm=... ou ?token=...
+  (async function processIncomingParams() {
+    const qs = new URLSearchParams(window.location.search);
+    const incomingPerm = qs.get('perm');
+    const incomingToken = qs.get('token');
+    if (!incomingPerm && !incomingToken) return;
+    const body = incomingPerm ? { permToken: incomingPerm, currentStep: 1 } : { token: incomingToken, currentStep: 1 };
+    try {
+      const res = await fetch('/api/checkpoint?action=advance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data && data.valid) {
+        sessionStorage.setItem('rbx_token', data.token);
+        sessionStorage.setItem('rbx_step', String(data.next));
+        window.location.href = 'checkpoint2.html';
+      } else if (data && data.done) {
+        sessionStorage.setItem('rbx_key', data.key);
+        window.location.href = 'getkeyreward.html';
+      } else {
+        window.location.href = '../get-key.html';
       }
-    })();
-  </script>
+    } catch (e) {
+      console.error('processIncomingParams error', e);
+    }
+  })();
+</script>
 </body>
 </html>
