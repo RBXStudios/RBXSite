@@ -28,13 +28,10 @@
       pointer-events:none;z-index:1;}
     .wrap{position:relative;z-index:10;width:100%;max-width:500px;padding:24px;
       display:flex;flex-direction:column;align-items:center;gap:24px;}
-
     .logo-row{display:flex;align-items:center;gap:10px;}
     .logo-row img{width:38px;height:38px;border-radius:8px;filter:drop-shadow(0 0 6px var(--neon));}
     .logo-row span{font-family:var(--font-d);font-size:1rem;font-weight:900;color:#fff;}
     .logo-row .acc{color:var(--neon);}
-
-    /* Progress */
     .prog-wrap{width:100%;}
     .prog-label{display:flex;justify-content:space-between;
       font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;
@@ -48,8 +45,6 @@
       font-family:var(--font-d);font-size:0.6rem;font-weight:700;color:var(--text-dim);}
     .dot.active{border-color:var(--neon);color:var(--neon);box-shadow:0 0 8px var(--neon);}
     .dot.done{border-color:var(--neon);background:var(--neon-dim);color:var(--neon);}
-
-    /* Card */
     .card{width:100%;background:var(--surface);border:1px solid var(--surface-border);
       border-radius:16px;padding:36px 32px;position:relative;overflow:hidden;
       box-shadow:0 0 40px rgba(0,255,231,0.06),0 20px 60px rgba(0,0,0,0.4);}
@@ -60,8 +55,6 @@
     .card-sub{font-size:0.9rem;color:var(--text-dim);text-align:center;
       line-height:1.6;margin-bottom:28px;}
     .card-sub .acc{color:var(--neon);font-weight:700;}
-
-    /* Timer */
     .timer-wrap{display:flex;align-items:center;justify-content:center;gap:10px;
       margin-bottom:22px;}
     .timer-ring{position:relative;width:56px;height:56px;}
@@ -73,8 +66,6 @@
     .timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
       font-family:var(--font-d);font-size:1rem;font-weight:700;color:var(--neon);}
     .timer-label{font-size:0.88rem;color:var(--text-dim);}
-
-    /* Botão */
     .btn-cp{width:100%;padding:16px 24px;border-radius:10px;
       border:1px solid var(--neon);
       background:linear-gradient(135deg,rgba(0,255,231,0.15),rgba(0,255,231,0.05));
@@ -85,10 +76,8 @@
       background:linear-gradient(135deg,rgba(0,255,231,0.25),rgba(0,255,231,0.1));
       box-shadow:var(--neon-glow);transform:translateY(-2px);}
     .btn-cp:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}
-
     .note{margin-top:14px;font-size:0.82rem;color:var(--text-dim);
       text-align:center;line-height:1.5;opacity:0.7;}
-
     @media(max-width:500px){.card{padding:28px 20px;}}
   </style>
 </head>
@@ -96,12 +85,10 @@
   <div class="bg-grid"></div>
   <div class="scanlines"></div>
   <div class="wrap">
-
     <div class="logo-row">
       <img src="../Logo.png" alt="RBX"/>
       <span>RBX<span class="acc">EXPLOIT</span></span>
     </div>
-
     <div class="prog-wrap">
       <div class="prog-label"><span>CHECKPOINT 3/3</span><span>99%</span></div>
       <div class="prog-track"><div class="prog-fill" style="width:99%"></div></div>
@@ -111,14 +98,12 @@
         <div class="dot active">3</div>
       </div>
     </div>
-
     <div class="card">
       <div class="card-title">CHECKPOINT 3 / 3</div>
       <div class="card-sub">
         Último passo! Complete o terceiro encurtador.<br/>
         Sua key será <span class="acc">gerada automaticamente</span> após isso.
       </div>
-
       <div class="timer-wrap">
         <div class="timer-ring">
           <svg width="56" height="56" viewBox="0 0 56 56">
@@ -129,63 +114,24 @@
         </div>
         <div class="timer-label" id="timerLabel">Aguarde para continuar...</div>
       </div>
-
       <button class="btn-cp" id="btnCP" disabled onclick="goLink()">
         🔗 IR AO ENCURTADOR — CHECKPOINT 3
       </button>
-
       <div class="note">Após completar o encurtador, sua key FREE será gerada e exibida na tela.</div>
     </div>
-
   </div>
   <script>
-  // CONFIG
-  const SHORTENER_URL = 'https://lootdest.org/s?qC9dMdUM'; // seu encurtador (abre normal)
-  const PERM_TOKEN = 'Encurtador';
+  const SHORTENER_URL = 'https://lootdest.org/s?qC9dMdUM';
   let token = sessionStorage.getItem('rbx_token');
   let step  = sessionStorage.getItem('rbx_step');
 
-  // fallback: se encurtador redirecionou para cá com ?perm ou ?token
-  (async function handleIncomingRedirect() {
-    const qs = new URLSearchParams(window.location.search);
-    const incomingPerm = qs.get('perm');
-    const incomingToken = qs.get('token');
-    if (!incomingPerm && !incomingToken) return;
-    const body = incomingPerm ? { permToken: incomingPerm, currentStep: 2 } : { token: incomingToken, currentStep: 2 };
-    try {
-      const res = await fetch('/api/checkpoint?action=advance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if (data && data.done) {
-        sessionStorage.setItem('rbx_key', data.key);
-        sessionStorage.removeItem('rbx_token');
-        sessionStorage.removeItem('rbx_step');
-        window.location.href = 'getkeyreward.html';
-      } else if (data && data.valid) {
-        sessionStorage.setItem('rbx_token', data.token);
-        sessionStorage.setItem('rbx_step', String(data.next));
-        token = data.token;
-        step = String(data.next);
-      } else {
-        window.location.href = '../get-key.html';
-      }
-    } catch (e) {
-      console.error('Advance error', e);
-      window.location.href = '../get-key.html';
-    }
-  })();
-
   (function ensureSessionOrRedirect() {
     const qs = new URLSearchParams(window.location.search);
-    if ((!token || step !== '3') && !qs.get('perm') && !qs.get('token')) {
+    if ((!token || step !== '3') && !qs.get('confirm')) {
       window.location.href = '../get-key.html';
     }
   })();
 
-  // Timer + manual button
   const TOTAL = 3;
   let t = TOTAL;
   const ring  = document.getElementById('ringFg');
@@ -194,90 +140,63 @@
   const btn   = document.getElementById('btnCP');
   const C = 2 * Math.PI * 24;
   ring.style.strokeDasharray  = C;
-  ring.style.strokeDashoffset = 0;
+  ring.style.strokeDashoffset = C;
 
-  // abre encurtador normal (mesmo tab)
+  const timerInterval = setInterval(() => {
+    t--;
+    num.textContent = t;
+    ring.style.strokeDashoffset = C * (t / TOTAL);
+
+    if (t <= 0) {
+      clearInterval(timerInterval);
+      btn.disabled = false;
+      label.textContent = 'Clique para continuar!';
+      num.textContent = '✓';
+    }
+  }, 1000);
+
   function goLink() {
     window.location.href = SHORTENER_URL;
   }
 
-  // confirmação manual (currentStep = 3) — gera key
-  async function manualAdvance() {
+  function clearQueryStringPreservePath() {
+    if (window.history && window.history.replaceState) {
+      const clean = window.location.origin + window.location.pathname + window.location.hash;
+      window.history.replaceState({}, document.title, clean);
+    }
+  }
+
+  (async function processIncomingParams() {
+    const qs = new URLSearchParams(window.location.search);
+    const confirmCode = qs.get('confirm');
+    
+    if (!confirmCode) return;
+    
+    clearQueryStringPreservePath();
+
     try {
       const res = await fetch('/api/checkpoint?action=advance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: sessionStorage.getItem('rbx_token'), currentStep: 3 })
+        body: JSON.stringify({ token: sessionStorage.getItem('rbx_token'), currentStep: 3, confirmCode })
       });
       const data = await res.json();
-      if (data && data.done) {
+      if (data && data.valid) {
+        sessionStorage.setItem('rbx_token', data.token);
+        sessionStorage.setItem('rbx_step', String(data.next));
+        window.location.href = 'checkpoint3.html';
+      } else if (data && data.done) {
         sessionStorage.setItem('rbx_key', data.key);
         sessionStorage.removeItem('rbx_token');
         sessionStorage.removeItem('rbx_step');
         window.location.href = 'getkeyreward.html';
-        return;
+      } else {
+        window.location.href = '../get-key.html';
       }
-      if (data && data.valid) {
-        sessionStorage.setItem('rbx_token', data.token);
-        sessionStorage.setItem('rbx_step', String(data.next));
-        window.location.href = 'getkeyreward.html';
-        return;
-      }
-      alert('Não foi possível validar. Tente novamente.');
     } catch (e) {
-      console.error(e);
-      alert('Erro ao validar. Verifique sua conexão e tente novamente.');
+      console.error('processIncomingParams error', e);
     }
-  }
-  
-  // ----- limpa a query string sem recarregar -----
-function clearQueryStringPreservePath() {
-  if (window.history && window.history.replaceState) {
-    const clean = window.location.origin + window.location.pathname + window.location.hash;
-    window.history.replaceState({}, document.title, clean);
-  }
-}
-
-// exemplo: processamento ao carregar a página
-(async function processIncomingParamsAndHide() {
-  const qs = new URLSearchParams(window.location.search);
-  const incomingPerm = qs.get('perm');
-  const incomingToken = qs.get('token');
-
-  // se não veio nada, só limpa (opcional) e retorna
-  if (!incomingPerm && !incomingToken) return;
-
-  // limpa a query imediatamente pra não continuar visível
-  clearQueryStringPreservePath();
-
-  // prepara body para chamar advance (currentStep conforme página)
-  const currentStep = 3; /* coloque aqui o passo atual: 1 em checkpoint2, 2 em checkpoint3, etc. */
-  const body = incomingPerm ? { permToken: incomingPerm, currentStep } : { token: incomingToken, currentStep };
-
-  try {
-    const res = await fetch('/api/checkpoint?action=advance', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    if (data && data.valid) {
-      sessionStorage.setItem('rbx_token', data.token);
-      sessionStorage.setItem('rbx_step', String(data.next));
-      // redireciona se for o fluxo normal
-      window.location.href = `checkpoint${data.next}.html`;
-    } else if (data && data.done) {
-      sessionStorage.setItem('rbx_key', data.key);
-      window.location.href = 'getkeyreward.html';
-    } else {
-      window.location.href = '/get-key.html';
-    }
-  } catch (e) {
-    console.error('Advance error', e);
-    // deixe o usuário no lugar ou redirecione ao início
-    // window.location.href = '/get-key.html';
-  }
-})();
-</script>
+  })();
+  </script>
 </body>
 </html>
