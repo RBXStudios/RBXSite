@@ -122,7 +122,6 @@
   </div>
   <script>
   const SHORTENER_URL = 'https://lootdest.org/s?qC9dMdUM';
-  const PERM_TOKEN = 'Encurtador';
 
   let token = sessionStorage.getItem('rbx_token');
   let step  = sessionStorage.getItem('rbx_step');
@@ -155,7 +154,6 @@
   }, 1000);
 
   function goLink() {
-    sessionStorage.setItem('pendingPerm', PERM_TOKEN);
     window.location.href = SHORTENER_URL;
   }
 
@@ -169,20 +167,16 @@
   (async function processIncomingParams() {
     const qs = new URLSearchParams(window.location.search);
     const incomingToken = qs.get('token');
-    const pendingPerm = sessionStorage.getItem('pendingPerm');
 
-    if (!incomingToken && !pendingPerm) return;
+    if (!incomingToken) return;
 
     clearQueryStringPreservePath();
-
-    const tokenToUse = incomingToken || pendingPerm;
-    sessionStorage.removeItem('pendingPerm');
 
     try {
       const res = await fetch('/api/checkpoint?action=advance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permToken: tokenToUse, currentStep: 3 })
+        body: JSON.stringify({ permToken: incomingToken, currentStep: 3 })
       });
       const data = await res.json();
       if (data && data.valid) {
