@@ -140,7 +140,6 @@
   ring.style.strokeDasharray  = C;
   ring.style.strokeDashoffset = C;
 
-  // Timer countdown
   const timerInterval = setInterval(() => {
     t--;
     num.textContent = t;
@@ -154,13 +153,11 @@
     }
   }, 1000);
 
-  // Abre encurtador e armazena token em sessionStorage
   function goLink() {
     sessionStorage.setItem('pendingPerm', PERM_TOKEN);
     window.location.href = SHORTENER_URL;
   }
 
-  // Limpa URL quando volta
   function clearQueryStringPreservePath() {
     if (window.history && window.history.replaceState) {
       const clean = window.location.origin + window.location.pathname + window.location.hash;
@@ -168,26 +165,24 @@
     }
   }
 
-  // Processa quando volta do encurtador com ?perm=Encurtador
+  // Processa quando volta do encurtador com ?token=Encurtador
   (async function processIncomingParams() {
     const qs = new URLSearchParams(window.location.search);
-    const incomingPerm = qs.get('perm');
+    const incomingToken = qs.get('token');
     const pendingPerm = sessionStorage.getItem('pendingPerm');
 
-    // Se tem perm na URL OU no sessionStorage
-    if (!incomingPerm && !pendingPerm) return;
+    if (!incomingToken && !pendingPerm) return;
 
-    // Limpa URL imediatamente
     clearQueryStringPreservePath();
 
-    const permToUse = incomingPerm || pendingPerm;
+    const tokenToUse = incomingToken || pendingPerm;
     sessionStorage.removeItem('pendingPerm');
 
     try {
       const res = await fetch('/api/checkpoint?action=advance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permToken: permToUse, currentStep: 1 })
+        body: JSON.stringify({ permToken: tokenToUse, currentStep: 1 })
       });
       const data = await res.json();
       if (data && data.valid) {

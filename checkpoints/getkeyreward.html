@@ -82,7 +82,7 @@
   </div>
 
   <script>
-    const PERM_TOKEN = 'Encurtador';
+    const TOKEN = 'Encurtador';
 
     // Limpa URL sem recarregar
     function clearQueryStringPreservePath() {
@@ -92,19 +92,16 @@
       }
     }
 
-    // Tenta buscar key do encurtador com ?perm na URL
+    // Tenta buscar key do encurtador com ?token na URL
     async function tryFetchKeyFromAdvanceUsingQuery() {
       const params = new URLSearchParams(window.location.search);
-      const incomingPerm = params.get('perm');
-      const pendingPerm = sessionStorage.getItem('pendingPerm');
+      const incomingToken = params.get('token');
 
-      const permToUse = incomingPerm || pendingPerm;
-      if (!permToUse) return null;
+      if (!incomingToken) return null;
 
-      sessionStorage.removeItem('pendingPerm');
       clearQueryStringPreservePath();
 
-      const body = { permToken: permToUse, currentStep: 3 };
+      const body = { permToken: incomingToken, currentStep: 3 };
       try {
         const res = await fetch('/api/checkpoint?action=advance', {
           method: 'POST',
@@ -141,7 +138,6 @@
       sessionStorage.removeItem('rbx_key');
       sessionStorage.removeItem('rbx_token');
       sessionStorage.removeItem('rbx_step');
-      sessionStorage.removeItem('pendingPerm');
     }
 
     function copyKey() {

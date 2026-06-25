@@ -127,12 +127,9 @@
   let token = sessionStorage.getItem('rbx_token');
   let step  = sessionStorage.getItem('rbx_step');
 
-  (function ensureSessionOrRedirect() {
-    const qs = new URLSearchParams(window.location.search);
-    if ((!token || step !== '3') && !qs.get('perm')) {
-      window.location.href = '../get-key.html';
-    }
-  })();
+  if (!token || step !== '3') {
+    window.location.href = '../get-key.html';
+  }
 
   const TOTAL = 3;
   let t = TOTAL;
@@ -171,21 +168,21 @@
 
   (async function processIncomingParams() {
     const qs = new URLSearchParams(window.location.search);
-    const incomingPerm = qs.get('perm');
+    const incomingToken = qs.get('token');
     const pendingPerm = sessionStorage.getItem('pendingPerm');
 
-    if (!incomingPerm && !pendingPerm) return;
+    if (!incomingToken && !pendingPerm) return;
 
     clearQueryStringPreservePath();
 
-    const permToUse = incomingPerm || pendingPerm;
+    const tokenToUse = incomingToken || pendingPerm;
     sessionStorage.removeItem('pendingPerm');
 
     try {
       const res = await fetch('/api/checkpoint?action=advance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permToken: permToUse, currentStep: 3 })
+        body: JSON.stringify({ permToken: tokenToUse, currentStep: 3 })
       });
       const data = await res.json();
       if (data && data.valid) {
