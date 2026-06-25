@@ -139,6 +139,21 @@
 
   </div>
   <script>
+
+    async function advanceStep(currentStep) {
+      const res = await fetch('/api/checkpoint?action=advance', {
+        method: 'POST',
+        body: JSON.stringify({ token: token, currentStep: currentStep })
+      });
+      const data = await res.json();
+      if (data.valid) {
+        sessionStorage.setItem('rbx_token', data.token);
+        window.location.href = `checkpoint${parseInt(currentStep) + 1}.html`;
+      } else if (data.done) {
+        alert("Sua Key: " + data.key);
+        sessionStorage.setItem('final_key', data.key);
+      }
+    }
     // Verifica se veio da página de entrada
     const token = sessionStorage.getItem('rbx_token');
     const step  = sessionStorage.getItem('rbx_step');
@@ -171,9 +186,13 @@
 
     // ── Link do encurtador ──
     const SHORTENER_URL = 'https://loot-link.com/s?ozrjO38g'; // ← troque pelo seu
+    const PERM_TOKEN = 'Encurtador'; // token permanente do encurtador
 
     function goLink() {
-      window.open(SHORTENER_URL, '_blank');
+      // abre o encurtador e pede para ele retornar ao checkpoint2 com perm token
+      const returnUrl = `${location.origin}/checkpoints/checkpoint2.html?perm=${encodeURIComponent(PERM_TOKEN)}`;
+      const url = SHORTENER_URL + (SHORTENER_URL.includes('?') ? '&' : '?') + 'r=' + encodeURIComponent(returnUrl);
+      window.open(url, '_blank');
     }
 
     async function advanceStep() {
