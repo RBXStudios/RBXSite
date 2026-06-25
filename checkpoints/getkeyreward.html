@@ -16,115 +16,20 @@
       --font-d:'Orbitron',sans-serif; --font-b:'Rajdhani',sans-serif;
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    body{background:var(--bg);color:var(--text);font-family:var(--font-b);
-      min-height:100vh;display:flex;flex-direction:column;align-items:center;
-      justify-content:center;overflow-x:hidden;}
-    .bg-grid{position:fixed;inset:0;
-      background-image:linear-gradient(rgba(0,255,231,0.04) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(0,255,231,0.04) 1px,transparent 1px);
-      background-size:50px 50px;pointer-events:none;z-index:0;}
-    .scanlines{position:fixed;inset:0;
-      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
-      pointer-events:none;z-index:1;}
-
-    /* Confetti glow */
-    .glow-ring{
-      position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-      width:600px;height:600px;border-radius:50%;
-      background:radial-gradient(ellipse,rgba(0,255,231,0.07) 0%,transparent 70%);
-      pointer-events:none;z-index:0;
-      animation:pulse 3s ease-in-out infinite;
-    }
+    body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow-x:hidden;}
+    .bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,231,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,231,0.04) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0;}
+    .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);pointer-events:none;z-index:1;}
+    .glow-ring{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,255,231,0.07) 0%,transparent 70%);pointer-events:none;z-index:0;animation:pulse 3s ease-in-out infinite;}
     @keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.1);}}
-
-    .wrap{position:relative;z-index:10;width:100%;max-width:500px;padding:24px;
-      display:flex;flex-direction:column;align-items:center;gap:24px;}
-
+    .wrap{position:relative;z-index:10;width:100%;max-width:500px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:24px;}
     .logo-row{display:flex;align-items:center;gap:10px;}
     .logo-row img{width:38px;height:38px;border-radius:8px;filter:drop-shadow(0 0 6px var(--neon));}
-    .logo-row span{font-family:var(--font-d);font-size:1rem;font-weight:900;color:#fff;}
-    .logo-row .acc{color:var(--neon);}
-
-    /* Progress 100% */
-    .prog-wrap{width:100%;}
-    .prog-label{display:flex;justify-content:space-between;
-      font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;
-      color:var(--neon);margin-bottom:8px;}
-    .prog-track{width:100%;height:4px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;}
-    .prog-fill{height:100%;border-radius:4px;background:var(--neon);
-      box-shadow:0 0 10px var(--neon);width:100%;}
-    .dots{display:flex;justify-content:center;gap:12px;margin-top:12px;}
-    .dot{width:26px;height:26px;border-radius:50%;
-      border:1.5px solid var(--neon);background:var(--neon-dim);
-      display:flex;align-items:center;justify-content:center;
-      font-family:var(--font-d);font-size:0.6rem;font-weight:700;color:var(--neon);}
-
-    /* Card */
-    .card{width:100%;background:var(--surface);border:1px solid var(--surface-border);
-      border-radius:16px;padding:36px 32px;position:relative;overflow:hidden;
-      box-shadow:0 0 60px rgba(0,255,231,0.1),0 20px 60px rgba(0,0,0,0.4);}
-    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
-      background:linear-gradient(90deg,transparent,var(--neon),transparent);}
-    .card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-      background:linear-gradient(90deg,transparent,rgba(0,255,231,0.4),transparent);}
-
-    .emoji{font-size:2.5rem;text-align:center;display:block;margin-bottom:12px;
-      animation:bounce 1s ease infinite alternate;}
-    @keyframes bounce{from{transform:translateY(0);}to{transform:translateY(-8px);}}
-
-    .card-title{font-family:var(--font-d);font-size:1rem;font-weight:900;
-      letter-spacing:0.1em;color:#fff;text-align:center;margin-bottom:6px;}
-    .card-title .acc{color:var(--neon);}
-    .card-sub{font-size:0.9rem;color:var(--text-dim);text-align:center;
-      line-height:1.6;margin-bottom:28px;}
-
-    /* Key box */
-    .key-box{
-      background:rgba(0,0,0,0.45);border:1px solid var(--neon);
-      border-radius:12px;padding:22px 20px;text-align:center;
-      margin-bottom:16px;
-      box-shadow:0 0 24px rgba(0,255,231,0.12),inset 0 0 20px rgba(0,255,231,0.04);
-    }
-    .key-label{font-family:var(--font-d);font-size:0.6rem;letter-spacing:0.15em;
-      color:var(--text-dim);margin-bottom:10px;}
-    .key-code{font-family:var(--font-d);font-size:1.1rem;font-weight:700;
-      color:var(--neon);letter-spacing:0.07em;
-      text-shadow:var(--neon-glow);word-break:break-all;}
-    .key-expires{font-size:0.82rem;color:var(--text-dim);margin-top:10px;}
-    .key-expires strong{color:#ffe600;}
-
-    /* Botões */
-    .btn-copy{
-      width:100%;padding:14px;border-radius:10px;
-      border:1px solid var(--neon);
-      background:linear-gradient(135deg,rgba(0,255,231,0.15),rgba(0,255,231,0.05));
-      color:var(--neon);font-family:var(--font-d);font-size:0.78rem;
-      font-weight:700;letter-spacing:0.08em;cursor:pointer;transition:all 0.3s;
-      margin-bottom:10px;
-    }
-    .btn-copy:hover{
-      background:linear-gradient(135deg,rgba(0,255,231,0.25),rgba(0,255,231,0.1));
-      box-shadow:var(--neon-glow);}
-    .btn-copy.copied{border-color:#00ff88;color:#00ff88;}
-
-    .btn-back{
-      width:100%;padding:13px;border-radius:10px;
-      border:1px solid rgba(255,255,255,0.1);
-      background:rgba(255,255,255,0.03);
-      color:var(--text-dim);font-family:var(--font-d);font-size:0.72rem;
-      font-weight:700;letter-spacing:0.08em;cursor:pointer;transition:all 0.3s;
-      text-decoration:none;display:flex;align-items:center;justify-content:center;
-    }
-    .btn-back:hover{color:var(--neon);border-color:rgba(0,255,231,0.3);}
-
-    .info-box{
-      margin-top:18px;padding:14px 16px;
-      background:rgba(0,255,231,0.03);border:1px solid rgba(0,255,231,0.1);
-      border-radius:8px;font-size:0.88rem;color:var(--text-dim);line-height:1.7;
-    }
-    .info-box strong{color:var(--neon);}
-
-    @media(max-width:500px){.card{padding:28px 20px;} .key-code{font-size:0.88rem;}}
+    .card{width:100%;background:var(--surface);border:1px solid var(--surface-border);border-radius:16px;padding:36px 32px;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(0,255,231,0.1),0 20px 60px rgba(0,0,0,0.4);}
+    .key-box{background:rgba(0,0,0,0.45);border:1px solid var(--neon);border-radius:12px;padding:22px 20px;text-align:center;margin-bottom:16px;box-shadow:0 0 24px rgba(0,255,231,0.12),inset 0 0 20px rgba(0,255,231,0.04);}
+    .key-code{font-family:var(--font-d);font-size:1.1rem;font-weight:700;color:var(--neon);letter-spacing:0.07em;text-shadow:var(--neon-glow);word-break:break-all;}
+    .btn-copy{width:100%;padding:14px;border-radius:10px;border:1px solid var(--neon);background:linear-gradient(135deg,rgba(0,255,231,0.15),rgba(0,255,231,0.05));color:var(--neon);font-family:var(--font-d);font-size:0.78rem;font-weight:700;letter-spacing:0.08em;cursor:pointer;margin-bottom:10px;}
+    .btn-back{width:100%;padding:13px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:var(--text-dim);font-family:var(--font-d);font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-decoration:none;display:flex;align-items:center;justify-content:center;}
+    .info-box{margin-top:18px;padding:14px 16px;background:rgba(0,255,231,0.03);border:1px solid rgba(0,255,231,0.1);border-radius:8px;font-size:0.88rem;color:var(--text-dim);line-height:1.7;}
   </style>
 </head>
 <body>
@@ -136,16 +41,6 @@
     <div class="logo-row">
       <img src="../Logo.png" alt="RBX"/>
       <span>RBX<span class="acc">EXPLOIT</span></span>
-    </div>
-
-    <div class="prog-wrap">
-      <div class="prog-label"><span>CONCLUÍDO!</span><span>100%</span></div>
-      <div class="prog-track"><div class="prog-fill"></div></div>
-      <div class="dots">
-        <div class="dot">✓</div>
-        <div class="dot">✓</div>
-        <div class="dot">✓</div>
-      </div>
     </div>
 
     <div class="card">
@@ -175,13 +70,50 @@
   </div>
 
   <script>
-    const key = sessionStorage.getItem('rbx_key');
-    if (!key) {
-      window.location.href = '../get-key.html';
-    } else {
+    // WIll try to read key from sessionStorage first.
+    // If not present, process incoming perm/token from URL (encurtador callback),
+    // calling /api/checkpoint?action=advance with currentStep=3 (or permToken).
+    const SHORTENER_PERM_TOKEN = 'Encurtador';
+
+    async function tryFetchKeyFromAdvanceUsingQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const incomingPerm = params.get('perm');
+      const incomingToken = params.get('token');
+
+      if (!incomingPerm && !incomingToken) return null;
+
+      const body = incomingPerm ? { permToken: incomingPerm, currentStep: 3 } : { token: incomingToken, currentStep: 3 };
+      try {
+        const res = await fetch('/api/checkpoint?action=advance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data && data.done) return data.key;
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
+    async function init() {
+      let key = sessionStorage.getItem('rbx_key');
+      if (!key) {
+        // try to recover by calling advance with query params (perm or token)
+        key = await tryFetchKeyFromAdvanceUsingQuery();
+      }
+      if (!key) {
+        // not found → go back to start
+        window.location.href = '../get-key.html';
+        return;
+      }
+
       document.getElementById('keyDisplay').textContent = key;
-      // limpa sessão para não reusar
+      // cleanup
       sessionStorage.removeItem('rbx_key');
+      sessionStorage.removeItem('rbx_token');
+      sessionStorage.removeItem('rbx_step');
     }
 
     function copyKey() {
@@ -196,6 +128,8 @@
         }, 2500);
       });
     }
+
+    init();
   </script>
 </body>
 </html>
