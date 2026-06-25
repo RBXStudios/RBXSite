@@ -161,6 +161,7 @@
   ring.style.strokeDasharray  = C;
   ring.style.strokeDashoffset = 0;
 
+ 
   // abre o encurtador NO MESMO TAB (normal)
   function goLink() {
     window.location.href = SHORTENER_URL;
@@ -195,6 +196,35 @@
     }
   }
 
+  // Fallback: caso encurtador redirecione de volta com ?perm=... ou ?token=...
+  (async function processIncomingParams() {
+    const qs = new URLSearchParams(window.location.search);
+    const incomingPerm = qs.get('perm');
+    const incomingToken = qs.get('token');
+    if (!incomingPerm && !incomingToken) return;
+    const body = incomingPerm ? { permToken: incomingPerm, currentStep: 1 } : { token: incomingToken, currentStep: 1 };
+    try {
+      const res = await fetch('/api/checkpoint?action=advance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data && data.valid) {
+        sessionStorage.setItem('rbx_token', data.token);
+        sessionStorage.setItem('rbx_step', String(data.next));
+        window.location.href = 'checkpoint2.html';
+      } else if (data && data.done) {
+        sessionStorage.setItem('rbx_key', data.key);
+        window.location.href = 'getkeyreward.html';
+      } else {
+        window.location.href = '../get-key.html';
+      }
+    } catch (e) {
+      console.error('processIncomingParams error', e);
+    }
+  })();
+
   // ----- limpa a query string sem recarregar -----
 function clearQueryStringPreservePath() {
   if (window.history && window.history.replaceState) {
@@ -216,7 +246,7 @@ function clearQueryStringPreservePath() {
   clearQueryStringPreservePath();
 
   // prepara body para chamar advance (currentStep conforme página)
-  const currentStep = 1; // exemplo: 1 em checkpoint1, 2 em checkpoint2, etc.
+  const currentStep = 1/* coloque aqui o passo atual: 1 em checkpoint2, 2 em checkpoint3, etc. */;
   const body = incomingPerm ? { permToken: incomingPerm, currentStep } : { token: incomingToken, currentStep };
 
   try {
