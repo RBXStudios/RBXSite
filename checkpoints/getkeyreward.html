@@ -83,7 +83,7 @@
 
   <script>
     const TOKEN = 'Encurtador';
-
+    
     // Limpa URL sem recarregar
     function clearQueryStringPreservePath() {
       if (window.history && window.history.replaceState) {
@@ -92,16 +92,18 @@
       }
     }
 
-    // Tenta buscar key do encurtador com ?token na URL
+    // Tenta buscar key do encurtador com ?token ou ?perm na URL
     async function tryFetchKeyFromAdvanceUsingQuery() {
       const params = new URLSearchParams(window.location.search);
       const incomingToken = params.get('token');
+      const incomingPerm = params.get('perm');
 
-      if (!incomingToken) return null;
+      const tokenToUse = incomingToken || incomingPerm;
+      if (!tokenToUse) return null;
 
       clearQueryStringPreservePath();
 
-      const body = { permToken: incomingToken, currentStep: 3 };
+      const body = { permToken: tokenToUse, currentStep: 3 };
       try {
         const res = await fetch('/api/checkpoint?action=advance', {
           method: 'POST',

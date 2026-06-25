@@ -166,9 +166,9 @@
 
   (async function processIncomingParams() {
     const qs = new URLSearchParams(window.location.search);
-    const incomingToken = qs.get('token');
+    const incomingPerm = qs.get('perm');
 
-    if (!incomingToken) return;
+    if (!incomingPerm) return;
 
     clearQueryStringPreservePath();
 
@@ -176,7 +176,7 @@
       const res = await fetch('/api/checkpoint?action=advance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permToken: incomingToken, currentStep: 2 })
+        body: JSON.stringify({ permToken: incomingPerm, currentStep: 2 })
       });
       const data = await res.json();
       if (data && data.valid) {
