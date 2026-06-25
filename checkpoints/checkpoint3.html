@@ -122,11 +122,15 @@
   </div>
   <script>
   const SHORTENER_URL = 'https://lootdest.org/s?qC9dMdUM';
+  const STEP = 3;
+
+  const qs = new URLSearchParams(window.location.search);
+  const incomingPerm = qs.get('perm') || qs.get('token');
 
   let token = sessionStorage.getItem('rbx_token');
   let step  = sessionStorage.getItem('rbx_step');
 
-  if (!token || step !== '3') {
+  if (!incomingPerm && (!token || step !== String(STEP))) {
     window.location.href = '../get-key.html';
   }
 
@@ -165,9 +169,6 @@
   }
 
   (async function processIncomingParams() {
-    const qs = new URLSearchParams(window.location.search);
-    const incomingPerm = qs.get('perm');
-
     if (!incomingPerm) return;
 
     clearQueryStringPreservePath();
@@ -176,23 +177,26 @@
       const res = await fetch('/api/checkpoint?action=advance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permToken: incomingPerm, currentStep: 3 })
+        body: JSON.stringify({ permToken: incomingPerm, currentStep: STEP })
       });
       const data = await res.json();
-      if (data && data.valid) {
-        sessionStorage.setItem('rbx_token', data.token);
-        sessionStorage.setItem('rbx_step', String(data.next));
-        window.location.href = 'checkpoint3.html';
-      } else if (data && data.done) {
+      if (data && data.done) {
         sessionStorage.setItem('rbx_key', data.key);
         sessionStorage.removeItem('rbx_token');
         sessionStorage.removeItem('rbx_step');
         window.location.href = 'getkeyreward.html';
+      } else if (data && data.valid) {
+        // Não deveria ocorrer no último checkpoint (esperado é "done"),
+        // mas evita o loop de redirecionar pra ele mesmo.
+        sessionStorage.setItem('rbx_token', data.token);
+        sessionStorage.setItem('rbx_step', String(data.next));
+        window.location.href = '../get-key.html';
       } else {
         window.location.href = '../get-key.html';
       }
     } catch (e) {
       console.error('processIncomingParams error', e);
+      window.location.href = '../get-key.html';
     }
   })();
   </script>
