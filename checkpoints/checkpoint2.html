@@ -158,8 +158,18 @@
     }
   }, 1000);
 
+  let pendingAdvance = null;
+
   function goLink() {
-    window.location.href = SHORTENER_URL;
+    if (pendingAdvance && pendingAdvance.done) {
+      window.location.href = 'getkeyreward.html';
+    } else if (pendingAdvance) {
+      sessionStorage.setItem('rbx_token', pendingAdvance.token);
+      sessionStorage.setItem('rbx_step', String(pendingAdvance.next));
+      window.location.href = NEXT_PAGE;
+    } else {
+      window.location.href = SHORTENER_URL;
+    }
   }
 
   function clearQueryStringPreservePath() {
@@ -173,6 +183,7 @@
     if (!incomingPerm) return;
 
     clearQueryStringPreservePath();
+    label.textContent = 'Confirmando seu encurtador...';
 
     try {
       const res = await fetch('/api/checkpoint?action=advance', {
@@ -181,21 +192,32 @@
         body: JSON.stringify({ permToken: incomingPerm, currentStep: STEP })
       });
       const data = await res.json();
+
       if (data && data.valid) {
-        sessionStorage.setItem('rbx_token', data.token);
-        sessionStorage.setItem('rbx_step', String(data.next));
-        window.location.href = NEXT_PAGE;
+        pendingAdvance = { token: data.token, next: data.next };
+        clearInterval(timerInterval);
+        ring.style.strokeDashoffset = 0;
+        num.textContent = '✓';
+        label.textContent = 'Encurtador confirmado! Clique para continuar.';
+        btn.textContent = '➜ CONTINUAR PARA O CHECKPOINT ' + data.next;
+        btn.disabled = false;
       } else if (data && data.done) {
         sessionStorage.setItem('rbx_key', data.key);
         sessionStorage.removeItem('rbx_token');
         sessionStorage.removeItem('rbx_step');
-        window.location.href = 'getkeyreward.html';
+        pendingAdvance = { done: true };
+        clearInterval(timerInterval);
+        ring.style.strokeDashoffset = 0;
+        num.textContent = '✓';
+        label.textContent = 'Key gerada! Clique para ver.';
+        btn.textContent = '🎉 VER MINHA KEY';
+        btn.disabled = false;
       } else {
-        window.location.href = '../get-key.html';
+        label.textContent = 'Não foi possível confirmar. Tente o encurtador de novo.';
       }
     } catch (e) {
       console.error('processIncomingParams error', e);
-      window.location.href = '../get-key.html';
+      label.textContent = 'Erro de conexão. Tente o encurtador de novo.';
     }
   })();
   </script>

@@ -157,8 +157,14 @@
     }
   }, 1000);
 
+  let pendingAdvance = null;
+
   function goLink() {
-    window.location.href = SHORTENER_URL;
+    if (pendingAdvance && pendingAdvance.done) {
+      window.location.href = 'getkeyreward.html';
+    } else {
+      window.location.href = SHORTENER_URL;
+    }
   }
 
   function clearQueryStringPreservePath() {
@@ -172,6 +178,7 @@
     if (!incomingPerm) return;
 
     clearQueryStringPreservePath();
+    label.textContent = 'Confirmando seu encurtador...';
 
     try {
       const res = await fetch('/api/checkpoint?action=advance', {
@@ -180,23 +187,26 @@
         body: JSON.stringify({ permToken: incomingPerm, currentStep: STEP })
       });
       const data = await res.json();
+
       if (data && data.done) {
         sessionStorage.setItem('rbx_key', data.key);
         sessionStorage.removeItem('rbx_token');
         sessionStorage.removeItem('rbx_step');
-        window.location.href = 'getkeyreward.html';
-      } else if (data && data.valid) {
-        // Não deveria ocorrer no último checkpoint (esperado é "done"),
-        // mas evita o loop de redirecionar pra ele mesmo.
-        sessionStorage.setItem('rbx_token', data.token);
-        sessionStorage.setItem('rbx_step', String(data.next));
-        window.location.href = '../get-key.html';
+        pendingAdvance = { done: true };
+        clearInterval(timerInterval);
+        ring.style.strokeDashoffset = 0;
+        num.textContent = '✓';
+        label.textContent = 'Key gerada! Clique para ver.';
+        btn.textContent = '🎉 VER MINHA KEY';
+        btn.disabled = false;
       } else {
-        window.location.href = '../get-key.html';
+        // Não deveria ocorrer "valid" sem "done" no último checkpoint;
+        // se acontecer, ou se for inválido, só avisa — não redireciona sozinho.
+        label.textContent = 'Não foi possível confirmar. Tente o encurtador de novo.';
       }
     } catch (e) {
       console.error('processIncomingParams error', e);
-      window.location.href = '../get-key.html';
+      label.textContent = 'Erro de conexão. Tente o encurtador de novo.';
     }
   })();
   </script>
