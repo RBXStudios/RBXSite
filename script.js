@@ -49,7 +49,10 @@ function setColor(name) {
   root.style.setProperty('--neon', c.neon);
   root.style.setProperty('--neon-dim', c.dim);
   root.style.setProperty('--neon-glow', c.glow);
-  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.color-dot').forEach(d => {
+    d.classList.remove('active');
+    d.style.borderColor = ''; // limpa qualquer borda inline deixada de uma seleção anterior
+  });
   const target = document.querySelector(`.color-dot.${name}`);
   if (target) {
     target.classList.add('active');

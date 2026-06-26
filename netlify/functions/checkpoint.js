@@ -1,10 +1,57 @@
 // ============================================================
 // RBX EXPLOIT — Checkpoint Token System (Netlify Function)
-// Perm token support: "Encurtador" (ou definir CHECKPOINT_PERM_TOKEN env)
+//
+// O loot-link/lootdest usados aqui não suportam token dinâmico por clique
+// (a URL de destino configurada no painel deles é sempre fixa). Por isso,
+// o "permToken" abaixo É o mecanismo real de produção — cada checkpoint
+// precisa estar configurado, no painel do encurtador, pra devolver pra
+// ELE MESMO com ?perm=<CHECKPOINT_PERM_TOKEN> (ex.: checkpoint2 -> volta
+// pra checkpoint2.html, nunca pra checkpoint3.html).
+//
+// IMPORTANTE: defina CHECKPOINT_PERM_TOKEN nas env vars do Netlify com um
+// valor próprio e privado (NÃO "Encurtador" — esse valor já apareceu em
+// vários lugares e não deve mais ser usado em produção). Sem essa env var
+// configurada, o bypass fica inerte e nenhum checkpoint avança.
 // ============================================================
 
 const SECRET = process.env.CHECKPOINT_SECRET || "rbx-exploit-secret-2025";
-const PERM_TOKEN = process.env.CHECKPOINT_PERM_TOKEN || "Encurtador";
+// Ligado por padrão (é o mecanismo real de produção aqui). Só fica inerte
+// se PERM_TOKEN não estiver definido, ou se você setar explicitamente
+// CHECKPOINT_ALLOW_PERM_BYPASS=false.
+const ALLOW_PERM_BYPASS = process.env.CHECKPOINT_ALLOW_PERM_BYPASS !== "false";
+const PERM_TOKEN = process.env.CHECKPOINT_PERM_TOKEN || null;
+
+// ── Integração com o keys.js (site do painel) ──────────────────────────
+// As credenciais devem ser EXATAMENTE as mesmas configuradas como
+// PANEL_ADMIN_EMAIL / PANEL_ADMIN_PASSWORD nas env vars do site
+// rbxpainelkeylol.netlify.app — senão o "create" vai voltar 401.
+const KEYS_API_URL = process.env.KEYS_API_URL
+  || "https://rbxpainelkeylol.netlify.app/.netlify/functions/keys";
+const KEYS_ADMIN_EMAIL    = process.env.PANEL_ADMIN_EMAIL || "rbxstudios@gmail.com";
+const KEYS_ADMIN_PASSWORD = process.env.PANEL_ADMIN_PASSWORD || "RBXStudios200@@";
+
+// Cria uma key FREE de 1 dia de verdade no banco do keys.js e devolve o
+// código real (ex.: "RBXF-AB12C-3D4EF-5G6H7"). Lança erro se falhar —
+// quem chamar deve tratar o catch e responder algo amigável pro usuário.
+async function createRealFreeKey() {
+  const auth = Buffer.from(`${KEYS_ADMIN_EMAIL}:${KEYS_ADMIN_PASSWORD}`).toString("base64");
+  const res = await fetch(`${KEYS_API_URL}?action=create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Basic ${auth}`,
+    },
+    body: JSON.stringify({ type: "free", duration: "1d" }),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data || !data.success || !data.key || !data.key.code) {
+    throw new Error(
+      (data && (data.error || data.reason)) ||
+      `Falha ao criar key real (status ${res.status})`
+    );
+  }
+  return data.key.code;
+}
 
 function simpleHash(str) {
   let hash = 5381;
@@ -80,20 +127,23 @@ exports.handler = async function (event) {
 
     if (isNaN(step) || step < 1 || step > 3) return json(400, { valid: false, reason: "Parâmetros inválidos" });
 
-    // 1) Se veio permToken e bate com o PERM_TOKEN configurado, aceita sem validar token temporário.
-    if (permToken && PERM_TOKEN && permToken === PERM_TOKEN) {
-      // Se é o último checkpoint (3) -> gera key FREE e retorna done
+    // 1) Bypass de teste — só roda se explicitamente habilitado via env vars.
+    if (ALLOW_PERM_BYPASS && PERM_TOKEN && permToken && permToken === PERM_TOKEN) {
+      // Se é o último checkpoint (3) -> cria a key FREE de verdade no keys.js e retorna done
       if (step === 3) {
-        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        const seg = () => Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-        const keyCode = `RBXF-${seg()}-${seg()}-${seg()}`;
-        return json(200, {
-          valid: true,
-          done: true,
-          key: keyCode,
-          type: "free",
-          expires: "1 dia",
-        });
+        try {
+          const keyCode = await createRealFreeKey();
+          return json(200, {
+            valid: true,
+            done: true,
+            key: keyCode,
+            type: "free",
+            expires: "1 dia",
+          });
+        } catch (e) {
+          console.error("Erro criando key real (permToken):", e);
+          return json(502, { valid: false, reason: "Não foi possível gerar a key agora. Tente novamente." });
+        }
       }
 
       // Senão, retorna token para o próximo passo
@@ -108,19 +158,19 @@ exports.handler = async function (event) {
     if (!v.ok) return json(200, { valid: false, reason: v.reason });
 
     if (step === 3) {
-      // gera key FREE de 1 dia
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      const seg = () => Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-      const keyCode = `RBXF-${seg()}-${seg()}-${seg()}`;
-
-      // retorno ao cliente; em produção você pode persistir no seu DB
-      return json(200, {
-        valid: true,
-        done: true,
-        key: keyCode,
-        type: "free",
-        expires: "1 dia",
-      });
+      try {
+        const keyCode = await createRealFreeKey();
+        return json(200, {
+          valid: true,
+          done: true,
+          key: keyCode,
+          type: "free",
+          expires: "1 dia",
+        });
+      } catch (e) {
+        console.error("Erro criando key real (token):", e);
+        return json(502, { valid: false, reason: "Não foi possível gerar a key agora. Tente novamente." });
+      }
     }
 
     // gera token do próximo passo
