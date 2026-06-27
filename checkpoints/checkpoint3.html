@@ -123,6 +123,7 @@
   <script>
   const SHORTENER_URL = 'https://lootdest.org/s?qC9dMdUM';
   const STEP = 3;
+  const PREV_STEP = 2; // o token que chega aqui confirma a conclusão do passo 2
 
   const qs = new URLSearchParams(window.location.search);
   const incomingPerm = qs.get('perm') || qs.get('token');
@@ -157,14 +158,8 @@
     }
   }, 1000);
 
-  let pendingAdvance = null;
-
   function goLink() {
-    if (pendingAdvance && pendingAdvance.done) {
-      window.location.href = 'getkeyreward.html';
-    } else {
-      window.location.href = SHORTENER_URL;
-    }
+    window.location.href = SHORTENER_URL;
   }
 
   function clearQueryStringPreservePath() {
@@ -174,39 +169,32 @@
     }
   }
 
-  (async function processIncomingParams() {
+  // Confirma em segundo plano que o passo 2 foi concluído de verdade.
+  // O encurtador DESTE checkpoint (configurado no loot-link/lootdest)
+  // deve devolver direto pra getkeyreward.html?perm=<TOKEN> — é lá que a
+  // key final é gerada e mostrada, não aqui.
+  (async function confirmPreviousStep() {
     if (!incomingPerm) return;
 
     clearQueryStringPreservePath();
-    label.textContent = 'Confirmando seu encurtador...';
 
     try {
       const res = await fetch('/api/checkpoint?action=advance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permToken: incomingPerm, currentStep: STEP })
+        body: JSON.stringify({ permToken: incomingPerm, currentStep: PREV_STEP })
       });
       const data = await res.json();
 
-      if (data && data.done) {
-        sessionStorage.setItem('rbx_key', data.key);
-        sessionStorage.removeItem('rbx_token');
-        sessionStorage.removeItem('rbx_step');
-        pendingAdvance = { done: true };
-        clearInterval(timerInterval);
-        ring.style.strokeDashoffset = 0;
-        num.textContent = '✓';
-        label.textContent = 'Key gerada! Clique para ver.';
-        btn.textContent = '🎉 VER MINHA KEY';
-        btn.disabled = false;
+      if (data && data.valid) {
+        sessionStorage.setItem('rbx_token', data.token);
+        sessionStorage.setItem('rbx_step', String(data.next));
       } else {
-        // Não deveria ocorrer "valid" sem "done" no último checkpoint;
-        // se acontecer, ou se for inválido, só avisa — não redireciona sozinho.
-        label.textContent = 'Não foi possível confirmar. Tente o encurtador de novo.';
+        label.textContent = 'Não foi possível confirmar o checkpoint anterior. Tente de novo.';
       }
     } catch (e) {
-      console.error('processIncomingParams error', e);
-      label.textContent = 'Erro de conexão. Tente o encurtador de novo.';
+      console.error('confirmPreviousStep error', e);
+      label.textContent = 'Erro de conexão ao confirmar o checkpoint anterior.';
     }
   })();
   </script>

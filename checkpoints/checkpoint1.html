@@ -123,18 +123,14 @@
   <script>
   const SHORTENER_URL = 'https://loot-link.com/s?KGnJaUWC';
   const STEP = 1;
-  const NEXT_PAGE = 'checkpoint2.html';
 
-  // Lê perm/token da URL ANTES de decidir se redireciona.
-  const qs = new URLSearchParams(window.location.search);
-  const incomingPerm = qs.get('perm') || qs.get('token');
-
+  // Checkpoint 1 é o ponto de partida — não existe "passo anterior" pra
+  // confirmar aqui. O encurtador desse link, no painel do loot-link, deve
+  // devolver direto pro checkpoint2.html?perm=<TOKEN> (não pra esta página).
   let token = sessionStorage.getItem('rbx_token');
   let step  = sessionStorage.getItem('rbx_step');
 
-  // Só chuta pro get-key.html se NÃO tiver token válido na sessão
-  // E também NÃO tiver vindo com perm/token na URL (volta do encurtador).
-  if (!incomingPerm && (!token || step !== String(STEP))) {
+  if (!token || step !== String(STEP)) {
     window.location.href = '../get-key.html';
   }
 
@@ -161,73 +157,9 @@
     }
   }, 1000);
 
-  // Guarda o resultado da validação em background (quando voltamos do
-  // encurtador com o token). Só usamos isso quando o usuário CLICAR no
-  // botão — nunca redirecionamos automaticamente.
-  let pendingAdvance = null;
-
   function goLink() {
-    if (pendingAdvance && pendingAdvance.done) {
-      window.location.href = 'getkeyreward.html';
-    } else if (pendingAdvance) {
-      sessionStorage.setItem('rbx_token', pendingAdvance.token);
-      sessionStorage.setItem('rbx_step', String(pendingAdvance.next));
-      window.location.href = NEXT_PAGE;
-    } else {
-      window.location.href = SHORTENER_URL;
-    }
+    window.location.href = SHORTENER_URL;
   }
-
-  function clearQueryStringPreservePath() {
-    if (window.history && window.history.replaceState) {
-      const clean = window.location.origin + window.location.pathname + window.location.hash;
-      window.history.replaceState({}, document.title, clean);
-    }
-  }
-
-  (async function processIncomingParams() {
-    if (!incomingPerm) return;
-
-    clearQueryStringPreservePath();
-    label.textContent = 'Confirmando seu encurtador...';
-
-    try {
-      const res = await fetch('/api/checkpoint?action=advance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permToken: incomingPerm, currentStep: STEP })
-      });
-      const data = await res.json();
-
-      if (data && data.valid) {
-        pendingAdvance = { token: data.token, next: data.next };
-        clearInterval(timerInterval);
-        ring.style.strokeDashoffset = 0;
-        num.textContent = '✓';
-        label.textContent = 'Encurtador confirmado! Clique para continuar.';
-        btn.textContent = '➜ CONTINUAR PARA O CHECKPOINT ' + data.next;
-        btn.disabled = false;
-      } else if (data && data.done) {
-        sessionStorage.setItem('rbx_key', data.key);
-        sessionStorage.removeItem('rbx_token');
-        sessionStorage.removeItem('rbx_step');
-        pendingAdvance = { done: true };
-        clearInterval(timerInterval);
-        ring.style.strokeDashoffset = 0;
-        num.textContent = '✓';
-        label.textContent = 'Key gerada! Clique para ver.';
-        btn.textContent = '🎉 VER MINHA KEY';
-        btn.disabled = false;
-      } else {
-        // Token inválido/expirado — não redireciona sozinho, só avisa.
-        // O usuário pode clicar no botão pra tentar o encurtador de novo.
-        label.textContent = 'Não foi possível confirmar. Tente o encurtador de novo.';
-      }
-    } catch (e) {
-      console.error('processIncomingParams error', e);
-      label.textContent = 'Erro de conexão. Tente o encurtador de novo.';
-    }
-  })();
   </script>
 </body>
 </html>

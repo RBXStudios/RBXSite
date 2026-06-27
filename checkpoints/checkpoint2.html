@@ -123,7 +123,7 @@
   <script>
   const SHORTENER_URL = 'https://lootdest.org/s?C8hNoilY';
   const STEP = 2;
-  const NEXT_PAGE = 'checkpoint3.html';
+  const PREV_STEP = 1; // o token que chega aqui confirma a conclusão do passo 1
 
   const qs = new URLSearchParams(window.location.search);
   const incomingPerm = qs.get('perm') || qs.get('token');
@@ -158,18 +158,8 @@
     }
   }, 1000);
 
-  let pendingAdvance = null;
-
   function goLink() {
-    if (pendingAdvance && pendingAdvance.done) {
-      window.location.href = 'getkeyreward.html';
-    } else if (pendingAdvance) {
-      sessionStorage.setItem('rbx_token', pendingAdvance.token);
-      sessionStorage.setItem('rbx_step', String(pendingAdvance.next));
-      window.location.href = NEXT_PAGE;
-    } else {
-      window.location.href = SHORTENER_URL;
-    }
+    window.location.href = SHORTENER_URL;
   }
 
   function clearQueryStringPreservePath() {
@@ -179,45 +169,34 @@
     }
   }
 
-  (async function processIncomingParams() {
+  // Confirma em segundo plano que o passo ANTERIOR (1) foi concluído de
+  // verdade, vindo do encurtador. Não redireciona pra lugar nenhum — só
+  // atualiza a sessão. O botão continua sendo sempre "ir ao encurtador"
+  // (desse checkpoint), e quem manda pro próximo é a configuração do
+  // próprio encurtador no painel do loot-link/lootdest.
+  (async function confirmPreviousStep() {
     if (!incomingPerm) return;
 
     clearQueryStringPreservePath();
-    label.textContent = 'Confirmando seu encurtador...';
 
     try {
       const res = await fetch('/api/checkpoint?action=advance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permToken: incomingPerm, currentStep: STEP })
+        body: JSON.stringify({ permToken: incomingPerm, currentStep: PREV_STEP })
       });
       const data = await res.json();
 
       if (data && data.valid) {
-        pendingAdvance = { token: data.token, next: data.next };
-        clearInterval(timerInterval);
-        ring.style.strokeDashoffset = 0;
-        num.textContent = '✓';
-        label.textContent = 'Encurtador confirmado! Clique para continuar.';
-        btn.textContent = '➜ CONTINUAR PARA O CHECKPOINT ' + data.next;
-        btn.disabled = false;
-      } else if (data && data.done) {
-        sessionStorage.setItem('rbx_key', data.key);
-        sessionStorage.removeItem('rbx_token');
-        sessionStorage.removeItem('rbx_step');
-        pendingAdvance = { done: true };
-        clearInterval(timerInterval);
-        ring.style.strokeDashoffset = 0;
-        num.textContent = '✓';
-        label.textContent = 'Key gerada! Clique para ver.';
-        btn.textContent = '🎉 VER MINHA KEY';
-        btn.disabled = false;
+        sessionStorage.setItem('rbx_token', data.token);
+        sessionStorage.setItem('rbx_step', String(data.next));
+        // já estamos na página certa (checkpoint2) — sem redirect.
       } else {
-        label.textContent = 'Não foi possível confirmar. Tente o encurtador de novo.';
+        label.textContent = 'Não foi possível confirmar o checkpoint anterior. Tente de novo.';
       }
     } catch (e) {
-      console.error('processIncomingParams error', e);
-      label.textContent = 'Erro de conexão. Tente o encurtador de novo.';
+      console.error('confirmPreviousStep error', e);
+      label.textContent = 'Erro de conexão ao confirmar o checkpoint anterior.';
     }
   })();
   </script>
